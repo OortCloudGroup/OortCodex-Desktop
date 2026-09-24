@@ -1,0 +1,5 @@
+{
+    "version": "1.0.18",
+    "vsixUrl": "https://myoumuamua.com/mystatic/aistudio/oortcodex.vsix",
+    "updateNote": "\r\n 1. 调整自动部署的逻辑 \r\n 2. 支持pcweb部署，go服务，java服务部署"
+}
