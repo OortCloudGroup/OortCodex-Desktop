@@ -1,76 +1,147 @@
-<h1 align="center">OortCloud AI Studio</h1>
+<h1 align="center">OortCodex Desktop</h1>
 
-一款强大的 AI 开发工具，为开发者训练、部署和管理 AI 模型提供高效解决方案。
+<p align="center"><strong>面向所有人的编程智能体工作台</strong></p>
+<p align="center"><em>把想法变成现实的能力，属于每一个人。</em></p>
 
-<a href="README.md">English</a> | 简体中文
+<p align="center">
+  <a href="README.md">English</a> | 简体中文
+</p>
 
-![OortCloud AI Studio](assets/aiagent_zh.jpg)
+![OortCodex Desktop](assets/aiagent_zh.jpg)
 
 ## 📖 项目概述
 
-OortCloud AI Studio 是一套专为 AI 开发者打造的一体化开发工具包。它能够简化 AI 模型开发流程、提高开发效率并降低技术门槛。无论你是 AI 初学者还是经验丰富的开发者，Oortcloud AI Studio 都能提供强大的功能，助力你的开发工作。
+OortCodex Desktop 是一款面向所有人的编程智能体工作台。它把「说清需求」到「拿到能跑的东西」之间的全部环节——读代码、查资料、改文件、执行命令、跑测试、排错——交给一个可以持续协作的智能体。
 
-## ✨ 核心功能
+你不需要先成为程序员。只要能把想法讲清楚，剩下的活由智能体陪你一起完成。
 
-- 模型训练：兼容多种主流 AI 框架，并提供易用的训练界面
-- 模型管理：提供统一的模型版本控制与部署工具
-- 数据处理：内置数据预处理与数据增强流水线
-- 可视化界面：通过直观的图形化控制面板简化复杂操作
-- 高性能计算：优化计算引擎，充分利用硬件资源
-- 高扩展性：采用插件化架构，支持自定义扩展
-- 跨平台兼容：支持 Windows、Linux 和 macOS
+> **把想法变成现实的能力，属于每一个人。**
+
+## ✨ 为什么叫「面向所有人」
+
+- **自然语言即接口**：用中文或英文描述目标，智能体自己规划步骤、动手执行、回报结果。
+- **三端同一个大脑**：桌面应用、浏览器工作台、终端界面共享同一套 Agent 运行时与账号体系，随时切换、上下文不断。
+- **从想法一直到产物**：不只是生成代码片段，还会查阅文档、调用外部工具、运行验证，直接交付可用的东西。
+- **专业用户也不将就**：多工作区、并行会话、插件市场、MCP、Hooks、远程开发，一样不少。
+
+## 🧩 核心能力
+
+### 🤖 编程智能体
+
+- 理解整个工程，自主拆解并规划多步任务，而不是只回答一个问题。
+- 读写文件、执行命令、运行测试、定位并修复问题。
+- 会话可继续、可分支、可并行，长任务不丢上下文。
+
+### 🖥 三端一体
+
+| 入口         | 形态                                   | 适合谁                                             |
+| ------------ | -------------------------------------- | -------------------------------------------------- |
+| 桌面应用     | Electron 客户端，开箱即用              | 大多数用户；需要完整图形界面与本地文件能力         |
+| 浏览器工作台 | Web 客户端，由本地后端托管             | 想在任何设备上打开浏览器就干活                     |
+| 终端界面     | `oortcodex` 命令行（TUI）              | 习惯命令行的开发者，以及自动化、脚本化场景         |
+
+三个入口共用同一套 Agent 运行时、同一份工作区和同一账号，无论从哪儿开始，接着往下做就行。
+
+### 🔌 插件与扩展生态
+
+插件是 OortCodex 的扩展单元，一个插件可以同时提供技能、自定义命令、MCP 服务与 Hooks：
+
+- **官方市场**：内置插件 + 经校验的官方 CDN 插件，统一目录、一键安装更新。
+- **个人来源**：git / GitHub / URL / 本地目录 / inline 插件，自己的工具自己接。
+- **开箱即用**：Browser Use、Document Skills、Skill Creator、OortCodex Guide 默认启用。
+- **按需启用**：iOS 模拟器、Android 模拟器、旧会话迁移等按需打开，不占资源。
+
+### 🧠 MCP 与 Hooks
+
+- **MCP**：支持 `stdio` / `http` / `sse` 三类服务，工具以 `mcp__<server>__<tool>` 形式接入模型。
+- **Hooks**：在会话开始、提示提交、工具调用前后、权限审批、回合结束等关键节点注入你自己的规则——既可以补充上下文，也可以直接拦截危险操作。
+
+### 🌐 远程与协同
+
+- **远程工作区**：通过 SSH / WSL 连接远端项目，在本地界面里操作远程代码。
+- **手机远控**：手机连接桌面已有的工作台，复用同一会话运行时，随时随地接着干。
+
+### 💳 模型与账号
+
+- 使用 OortCloud 账号统一登录，桌面端与命令行共享凭证。
+- 模型可查看、可切换，用量、订阅与 Credits 一目了然。
+
+### 🛡 安全与可控
+
+- 工具执行前需授权，危险操作可被规则拦截。
+- 日志分级：高频诊断信息在生产环境不落盘。
+- 凭证与真实用户数据不写入日志、示例或提交。
 
 ## 🚀 快速开始
 
-### 系统要求
+### 下载安装
 
-- 操作系统：Windows 10 或更高版本 / Linux / macOS
-- Python 3.8 或更高版本
-- CUDA 11.0 或更高版本（可选，用于 GPU 加速）
-- 至少 8 GB 内存
-- 20 GB 可用磁盘空间
+前往 [Releases](https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases) 下载对应平台的安装包：
 
-### 贡献代码
+- **Windows**：`.exe` 安装程序
+- **macOS**：`.dmg` 磁盘映像
+- **Linux**：对应发行包
 
-我们热烈欢迎各种形式的贡献！请按照以下步骤操作：
+### 自动更新
+
+客户端读取仓库根目录的 [latest.json](latest.json) 获取最新版本号、下载地址与 SHA-256 校验值，完成版本检测与自动更新。
+
+### 首次使用
+
+1. 启动 OortCodex Desktop。
+2. 使用 OortCloud 账号登录（桌面端与命令行共享同一份凭证）。
+3. 打开或新建一个工作区：本地目录，或通过 SSH / WSL 连接远程项目。
+4. 用自然语言描述你要做的事，智能体开始工作。
+
+## ⌨️ 命令行
+
+命令行发行包统一使用 `oortcodex` 启动：不带参数进入终端交互界面，`--web` 启动浏览器工作台。
+
+```bash
+oortcodex                  # 进入终端交互界面
+oortcodex --web            # 启动浏览器工作台
+oortcodex login oortcloud  # 登录 OortCloud 账号
+```
+
+## 🛠 技术栈
+
+Electron · React 19 · TypeScript · Node.js 24 · pnpm monorepo，跨 Windows / macOS / Linux。
+插件、MCP、Hooks、多工作台会话与远程链路都在同一套协议下实现。
+
+## 🤝 参与贡献
+
+欢迎各种形式的贡献：
 
 1. Fork 本仓库
 2. 创建功能分支（`git checkout -b feature/AmazingFeature`）
-3. 提交修改（`git commit -m 'Add some AmazingFeature'`）
+3. 提交修改（`git commit -m 'feat: 新增某某功能'`）
 4. 推送到远程分支（`git push origin feature/AmazingFeature`）
 5. 创建 Pull Request
 
-## 🤝 社区
-
-- 官方网站：[https://oortcloud.ai](https://link.wtturl.cn/?target=https%3A%2F%2Foortcloud.ai&scene=im&aid=497858&lang=zh)
-- 论坛：[https://forum.oortcloud.ai](https://link.wtturl.cn/?target=https%3A%2F%2Fforum.oortcloud.ai&scene=im&aid=497858&lang=zh)
-- Discord：加入我们的 Discord 社区
-- Twitter：@OortcloudAI
-
 ## 🐛 问题报告与反馈
 
-如果你遇到任何问题或有改进建议，请通过 GitHub Issues 提交。
+遇到问题或有改进建议，请通过 GitHub / GitCode Issues 提交。
 
 ### 快速脚本更新 latest.json
 
 在 PowerShell 中执行以下命令：
 
 ```powershell
-# 使用指定版本更新 latest.json；默认 EXE 路径：G:\lanjian\nginx\html_88_56\OortCloud AI Studio.exe
-.\scripts\update-latest.ps1 -Version "1.0.18"
+# 使用指定版本更新 latest.json；默认 EXE 路径：G:\lanjian\nginx\html_88_56\OortCodex-Desktop.exe
+.\scripts\update-latest.ps1 -Version "1.0.1"
 
 # 使用自定义可执行文件路径
-.\scripts\update-latest.ps1 -Version "1.0.6" -ExePath "G:\lanjian\nginx\html_88_56\OortCloud AI Studio.exe"
+.\scripts\update-latest.ps1 -Version "1.0.2" -ExePath "G:\lanjian\nginx\html_88_56\OortCodex-Desktop.exe"
 ```
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证，完整内容请参阅 LICENSE 文件。
+本项目采用 MIT 许可证，完整内容请参阅 [LICENSE](LICENSE) 文件。
 
 ## 🙏 致谢
 
-特别感谢所有为 OortCloud AI Studio 做出贡献的开发者！
+感谢所有为 OortCodex Desktop 做出贡献的开发者。
 
 ### 标语
 
-OortCloud AI Studio —— 让 AI 开发更简单、更高效
+**OortCodex Desktop —— 把想法变成现实的能力，属于每一个人。**
