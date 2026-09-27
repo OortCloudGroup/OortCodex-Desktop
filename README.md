@@ -103,6 +103,48 @@ oortcodex --web            # Start the browser workbench
 oortcodex login oortcloud  # Sign in to OortCloud
 ```
 
+## 📦 One-click CLI installation
+
+The repository ships a cross-platform installer covering bash, PowerShell, and cmd. It first checks the
+Node.js version (**24.14.0** required), then runs `npm install -g` for the `oortcodex-cli` tarball —
+**version `0.0.1` by default, configurable via variables or flags**.
+
+| Shell                 | Command                       |
+| --------------------- | ----------------------------- |
+| bash / zsh / Git Bash | `./scripts/install-cli.sh`    |
+| PowerShell            | `.\scripts\install-cli.ps1`   |
+| cmd                   | `scripts\install-cli.bat`     |
+
+Install a specific version:
+
+```bash
+# bash / zsh / Git Bash
+./scripts/install-cli.sh --version 0.0.2
+OORTCODEX_CLI_VERSION=0.0.2 ./scripts/install-cli.sh   # via environment variable
+```
+
+```powershell
+# PowerShell
+.\scripts\install-cli.ps1 -Version 0.0.2
+.\scripts\install-cli.ps1 -Version 0.0.2 -AutoInstallNode   # install Node via winget if missing
+```
+
+Configurable variables (equivalent flags take precedence):
+
+| Variable                  | Description                                        | Default                                     |
+| ------------------------- | -------------------------------------------------- | ------------------------------------------- |
+| `OORTCODEX_CLI_VERSION`   | Package version to install                         | `0.0.1`                                     |
+| `OORTCODEX_CLI_BASE_URL`  | Base URL of the tarball                            | `https://myoumuamua.com/mystatic/aistudio/` |
+| `OORTCODEX_CLI_PKG`       | Package name                                       | `oortcodex-cli`                             |
+| `OORTCODEX_NODE_VERSION`  | Required Node.js version                           | `24.14.0`                                   |
+| `OORTCODEX_NODE_MODE`     | Match mode: `exact` equals / `gte` at least        | `exact`                                     |
+
+Other useful flags: `--dry-run` (print the command only), `--allow-newer-node` (accept a newer Node
+version), `--skip-url-check` (skip the download URL probe).
+
+How it is built: `scripts/install-cli.mjs` holds the core logic (version check, URL assembly, install,
+verification), while `install-cli.sh` / `install-cli.ps1` / `install-cli.bat` are the per-shell entry points.
+
 ## 🛠 Tech stack
 
 Electron · React 19 · TypeScript · Node.js 24 · pnpm monorepo, across Windows / macOS / Linux.

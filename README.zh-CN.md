@@ -103,6 +103,47 @@ oortcodex --web            # 启动浏览器工作台
 oortcodex login oortcloud  # 登录 OortCloud 账号
 ```
 
+## 📦 一键安装命令行（CLI）
+
+仓库提供了一套跨平台安装脚本，覆盖 bash、PowerShell、cmd 三类终端：安装前先校验 Node.js 版本（要求 **24.14.0**），
+校验通过后执行 `npm install -g` 安装 `oortcodex-cli` 安装包，**默认版本 0.0.1，可用变量或参数指定**。
+
+| 终端                | 一键安装命令                  |
+| ------------------- | ----------------------------- |
+| bash / zsh / Git Bash | `./scripts/install-cli.sh`  |
+| PowerShell          | `.\scripts\install-cli.ps1`   |
+| cmd                 | `scripts\install-cli.bat`     |
+
+指定版本安装：
+
+```bash
+# bash / zsh / Git Bash
+./scripts/install-cli.sh --version 0.0.2
+OORTCODEX_CLI_VERSION=0.0.2 ./scripts/install-cli.sh   # 环境变量方式
+```
+
+```powershell
+# PowerShell
+.\scripts\install-cli.ps1 -Version 0.0.2
+.\scripts\install-cli.ps1 -Version 0.0.2 -AutoInstallNode   # 未装 Node 时自动用 winget 安装
+```
+
+可用变量（命令行同名参数可覆盖）：
+
+| 变量                      | 说明                                    | 默认值                                          |
+| ------------------------- | --------------------------------------- | ----------------------------------------------- |
+| `OORTCODEX_CLI_VERSION`   | 安装包版本号                            | `0.0.1`                                         |
+| `OORTCODEX_CLI_BASE_URL`  | 安装包下载地址前缀                      | `https://myoumuamua.com/mystatic/aistudio/`     |
+| `OORTCODEX_CLI_PKG`       | 包名                                    | `oortcodex-cli`                                 |
+| `OORTCODEX_NODE_VERSION`  | 要求的 Node.js 版本                     | `24.14.0`                                       |
+| `OORTCODEX_NODE_MODE`     | 版本匹配模式：`exact` 精确 / `gte` 不低于 | `exact`                                       |
+
+其他常用参数：`--dry-run`（只打印命令不安装）、`--allow-newer-node`（允许 Node 高于要求版本）、
+`--skip-url-check`（跳过下载地址探测）。
+
+脚本构成：`scripts/install-cli.mjs` 实现核心逻辑（版本校验、地址拼装、安装、结果校验），
+`install-cli.sh` / `install-cli.ps1` / `install-cli.bat` 是各终端的入口。
+
 ## 🛠 技术栈
 
 Electron · React 19 · TypeScript · Node.js 24 · pnpm monorepo，跨 Windows / macOS / Linux。
