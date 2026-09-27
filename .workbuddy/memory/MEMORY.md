@@ -20,7 +20,10 @@
 - 远程自举：`install-cli.sh` / `.ps1` 在本地找不到 `install-cli.mjs` 时（如 `curl | bash`、`irm | iex`），
   会按 `OORTCODEX_SCRIPTS_BASE_URL` → 自有静态站 → GitCode raw → GitHub raw → jsDelivr 的顺序下载核心脚本，
   并校验内容是否 HTML（跳过伪装成 200 的登录页）。
-- **GitCode raw 不可用**：`gitcode.com/<repo>/raw/<branch>/<path>`、`raw.gitcode.com`、`-/raw/`、archive.zip
-  全部返回同一个约 5.8KB 的 HTML 登录页（HTTP 200），无法 curl/irm 下载原始文件；GitHub raw 在本机网络不通。
-  已验证可达的是自有静态站 `https://myoumuamua.com/mystatic/aistudio/`（tgz 与脚本应放这里）。
+- **GitCode raw 正确格式**：`https://raw.gitcode.com/<组织>/<仓库>/raw/<分支>/<路径>`
+  —— 域名后**还有一层 `/raw/`**，写成 `raw.gitcode.com/<仓库>/main/...` 会拿到 HTML 页面。
+- 该接口**偶发 403「暂不支持预览」**（限流性质，重试即可成功），因此脚本每个源重试 2 次，
+  并校验下载内容排除 HTML / 「暂不支持预览」的伪装响应。
+- 不可用：`gitcode.com/<repo>/raw/<branch>/...`（返回 HTML 登录页）、`/-/raw/`、`archive/main.zip`、
+  jsDelivr（GitHub 侧无此仓库，404）；GitHub raw 本机网络不通（000）。
 - `scripts/update-latest.ps1` 是独立的 latest.json 更新脚本，与安装脚本无依赖关系。

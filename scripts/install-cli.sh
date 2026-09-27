@@ -20,8 +20,8 @@ AUTO_INSTALL_NODE=0
 # 远程脚本源：本地无核心脚本时按序尝试，可用 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
 CANDIDATE_BASES=(
   "${OORTCODEX_SCRIPTS_BASE_URL:-}"
+  "https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/"
   "https://myoumuamua.com/mystatic/aistudio/scripts/"
-  "https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/"
   "https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/"
   "https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/"
 )
@@ -94,30 +94,33 @@ else
   ensure_node_version
 fi
 
-# 判断文件是否为真正的脚本（排除 HTML 登录页等伪装响应）
+# 判断文件是否为真正的脚本（排除 HTML 登录页、403 提示等伪装响应）
 is_valid_script() {
   [ -s "$1" ] || return 1
-  ! head -c 512 "$1" | grep -qi '<!doctype html\|<html'
+  ! head -c 512 "$1" | grep -qi '<!doctype html\|<html\|暂不支持预览'
 }
 
-# 从远程源下载核心脚本 install-cli.mjs
+# 从远程源下载核心脚本 install-cli.mjs（每个源最多重试 2 次，应对偶发限流）
 download_core() {
-  local target="$1" base url
+  local target="$1" base url attempt
   for base in "${CANDIDATE_BASES[@]}"; do
     [ -n "$base" ] || continue
     url="${base%/}/install-cli.mjs"
-    echo "${LOG_PREFIX} 尝试下载：${url}"
-    if command -v curl >/dev/null 2>&1; then
-      curl -fsSL -m 60 "$url" -o "$target" 2>/dev/null || continue
-    elif command -v wget >/dev/null 2>&1; then
-      wget -q -T 60 -O "$target" "$url" 2>/dev/null || continue
-    else
-      echo "${LOG_PREFIX} 错误：curl 与 wget 都不可用，无法下载核心脚本"
-      return 1
-    fi
-    if is_valid_script "$target"; then
-      return 0
-    fi
+    for attempt in 1 2; do
+      echo "${LOG_PREFIX} 尝试下载（第 ${attempt} 次）：${url}"
+      if command -v curl >/dev/null 2>&1; then
+        curl -fsSL -m 60 "$url" -o "$target" 2>/dev/null || { sleep 2; continue; }
+      elif command -v wget >/dev/null 2>&1; then
+        wget -q -T 60 -O "$target" "$url" 2>/dev/null || { sleep 2; continue; }
+      else
+        echo "${LOG_PREFIX} 错误：curl 与 wget 都不可用，无法下载核心脚本"
+        return 1
+      fi
+      if is_valid_script "$target"; then
+        return 0
+      fi
+      sleep 2
+    done
   done
   return 1
 }

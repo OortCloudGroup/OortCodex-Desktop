@@ -151,40 +151,40 @@ The scripts ship with the repository, so a single line is enough — no need to 
 
 ```bash
 # bash / zsh / Git Bash
-curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash
+curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash
 
 # with a specific version
-curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash -s -- --version 0.0.2
+curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash -s -- --version 0.0.2
 ```
 
 ```powershell
 # PowerShell
-irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
 
 # with a specific version
-$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
 ```
 
 ```bat
 :: cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex"
 ```
 
-Script sources are tried in order until one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
+When piped, the script fetches its core `install-cli.mjs` automatically. Sources are tried in order until
+one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
 
-| Order | Source                                                                                  |
-| ----- | --------------------------------------------------------------------------------------- |
-| 1     | `$OORTCODEX_SCRIPTS_BASE_URL` (custom, highest priority)                                 |
-| 2     | `https://myoumuamua.com/mystatic/aistudio/scripts/` (same host as the tarball, recommended) |
-| 3     | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`                  |
-| 4     | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`        |
-| 5     | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`              |
+| Order | Source                                                                                       |
+| ----- | -------------------------------------------------------------------------------------------- |
+| 1     | `$OORTCODEX_SCRIPTS_BASE_URL` (custom, highest priority)                                      |
+| 2     | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/` (canonical repo)  |
+| 3     | `https://myoumuamua.com/mystatic/aistudio/scripts/` (mirror on the tarball host)              |
+| 4     | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`            |
+| 5     | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`                  |
 
-> **Note:** GitCode raw URLs (including `raw.gitcode.com`) currently return an HTML sign-in page instead
-> of the raw file, so they cannot be fetched with `curl` / `irm`. Sync the `scripts/` directory to your
-> own static host `https://myoumuamua.com/mystatic/aistudio/scripts/` (same host as the tarball, verified
-> reachable) or use GitHub raw instead. The scripts validate what they download and automatically skip
-> sources that return HTML.
+> **Note:** the GitCode raw URL layout is `raw.gitcode.com/<org>/<repo>/raw/<branch>/<path>` — there is an
+> extra `/raw/` segment right after the repository name; without it you get an HTML page. The endpoint also
+> returns `403 暂不支持预览` occasionally (rate limiting). The scripts retry each source twice and validate
+> what they download, skipping responses that are HTML or error text.
 
 ## 🛠 Tech stack
 

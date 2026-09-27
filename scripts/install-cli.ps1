@@ -38,8 +38,8 @@ catch {
 $scriptBases = @()
 if ($ScriptsBase) { $scriptBases += $ScriptsBase }
 $scriptBases += @(
+    'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/',
     'https://myoumuamua.com/mystatic/aistudio/scripts/',
-    'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/',
     'https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/',
     'https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/'
 )
@@ -59,18 +59,25 @@ function Get-RemoteCoreScript {
     foreach ($base in $BaseUrls) {
         if (-not $base) { continue }
         $url = $base.TrimEnd('/') + '/install-cli.mjs'
-        Write-Host "$LogPrefix 尝试下载：$url"
-        try {
-            Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
-        }
-        catch {
-            continue
-        }
-        if (Test-Path -LiteralPath $target -PathType Leaf) {
-            $head = (Get-Content -LiteralPath $target -TotalCount 5 -ErrorAction SilentlyContinue) -join "`n"
-            if ($head -and $head -notmatch '<!DOCTYPE html|<html') {
-                return $target
+
+        # 每个源最多重试 2 次，应对 GitCode raw 偶发的 403 限流
+        foreach ($attempt in 1..2) {
+            Write-Host "$LogPrefix 尝试下载（第 $attempt 次）：$url"
+            try {
+                Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
             }
+            catch {
+                Start-Sleep -Seconds 2
+                continue
+            }
+            if (Test-Path -LiteralPath $target -PathType Leaf) {
+                $head = (Get-Content -LiteralPath $target -TotalCount 5 -ErrorAction SilentlyContinue) -join "`n"
+                # 排除 HTML 登录页与「暂不支持预览」等伪装响应
+                if ($head -and $head -notmatch '<!DOCTYPE html|<html|暂不支持预览') {
+                    return $target
+                }
+            }
+            Start-Sleep -Seconds 2
         }
     }
     return $null

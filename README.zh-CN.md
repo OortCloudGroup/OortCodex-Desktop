@@ -150,39 +150,39 @@ OORTCODEX_CLI_VERSION=0.0.2 ./scripts/install-cli.sh   # 环境变量方式
 
 ```bash
 # bash / zsh / Git Bash
-curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash
+curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash
 
 # 指定版本
-curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash -s -- --version 0.0.2
+curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash -s -- --version 0.0.2
 ```
 
 ```powershell
 # PowerShell
-irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
 
 # 指定版本
-$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
 ```
 
 ```bat
 :: cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex"
 ```
 
-脚本源按以下顺序自动回退，第一个可用即止；也可用 `OORTCODEX_SCRIPTS_BASE_URL` 直接指定：
+管道方式执行时脚本会自动下载核心脚本 `install-cli.mjs`，脚本源按以下顺序回退，第一个可用即止；
+也可用 `OORTCODEX_SCRIPTS_BASE_URL` 直接指定：
 
-| 顺序 | 脚本源                                                                 |
-| ---- | ---------------------------------------------------------------------- |
-| 1    | `$OORTCODEX_SCRIPTS_BASE_URL`（自定义，优先级最高）                     |
-| 2    | `https://myoumuamua.com/mystatic/aistudio/scripts/`（与安装包同站，推荐） |
-| 3    | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/` |
-| 4    | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/` |
-| 5    | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/` |
+| 顺序 | 脚本源                                                                              |
+| ---- | ----------------------------------------------------------------------------------- |
+| 1    | `$OORTCODEX_SCRIPTS_BASE_URL`（自定义，优先级最高）                                  |
+| 2    | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/`（仓库正源） |
+| 3    | `https://myoumuamua.com/mystatic/aistudio/scripts/`（与安装包同站的镜像）             |
+| 4    | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`    |
+| 5    | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`          |
 
-> **注意**：GitCode 的 raw 链接（含 `raw.gitcode.com`）目前返回的是 HTML 登录页而非原始文件，
-> 因此无法直接 `curl` / `irm` 下载。请把 `scripts/` 目录同步到自有静态站
-> `https://myoumuamua.com/mystatic/aistudio/scripts/`（与安装包同一站点，已验证可达），
-> 或改用 GitHub raw。脚本会校验下载内容，自动跳过返回 HTML 的源并尝试下一个。
+> **说明**：GitCode 的 raw 地址格式为 `raw.gitcode.com/<组织>/<仓库>/raw/<分支>/<路径>`
+> —— 域名之后还有一层 `/raw/`，缺了会拿到 HTML 页面。该接口偶发返回 `403 暂不支持预览`（限流），
+> 脚本已内置「每源重试 2 次」，并会校验下载内容，自动跳过返回 HTML 或错误提示的响应。
 
 ## 🛠 技术栈
 
