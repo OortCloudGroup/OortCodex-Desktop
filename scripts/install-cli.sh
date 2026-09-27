@@ -23,8 +23,8 @@ USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 # 远程脚本源：本地无核心脚本时按序尝试，可用 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
 CANDIDATE_BASES=(
   "${OORTCODEX_SCRIPTS_BASE_URL:-}"
-  "https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/"
   "https://myoumuamua.com/mystatic/aistudio/scripts/"
+  "https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/"
   "https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/"
   "https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/"
 )

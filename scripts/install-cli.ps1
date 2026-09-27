@@ -41,8 +41,8 @@ $scriptUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 $scriptBases = @()
 if ($ScriptsBase) { $scriptBases += $ScriptsBase }
 $scriptBases += @(
-    'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/',
     'https://myoumuamua.com/mystatic/aistudio/scripts/',
+    'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/',
     'https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/',
     'https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/'
 )

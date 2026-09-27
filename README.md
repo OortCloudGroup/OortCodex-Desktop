@@ -151,52 +151,49 @@ The scripts ship with the repository, so a single line is enough — no need to 
 
 ```bash
 # bash / zsh / Git Bash
-curl -fsSL -A "Mozilla/5.0" https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash
 
 # with a specific version
-curl -fsSL -A "Mozilla/5.0" https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash -s -- --version 0.0.2
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash -s -- --version 0.0.2
 ```
 
 ```powershell
 # PowerShell
-irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex
+irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
 
 # with a specific version
-$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
 ```
 
 ```bat
 :: cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex"
 ```
 
 Fallback (download first, then run — easy to retry):
 
 ```powershell
-$u = 'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1'
-irm $u -UserAgent 'Mozilla/5.0' -OutFile "$env:TEMP\install-cli.ps1"
+$u = 'https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1'
+irm $u -OutFile "$env:TEMP\install-cli.ps1"
 & "$env:TEMP\install-cli.ps1"
 ```
 
 When piped, the script fetches its core `install-cli.mjs` automatically. Sources are tried in order until
 one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
 
-| Order | Source                                                                                       |
-| ----- | -------------------------------------------------------------------------------------------- |
-| 1     | `$OORTCODEX_SCRIPTS_BASE_URL` (custom, highest priority)                                      |
-| 2     | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/` (canonical repo)  |
-| 3     | `https://myoumuamua.com/mystatic/aistudio/scripts/` (mirror on the tarball host)              |
-| 4     | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`            |
-| 5     | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`                  |
+| Order | Source                                                                                        |
+| ----- | --------------------------------------------------------------------------------------------- |
+| 1     | `$OORTCODEX_SCRIPTS_BASE_URL` (custom, highest priority)                                       |
+| 2     | `https://myoumuamua.com/mystatic/aistudio/scripts/` (**primary**, same host as the tarball)     |
+| 3     | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/` (fallback)         |
+| 4     | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`             |
+| 5     | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`                   |
 
-> **Two things to know:**
->
-> 1. **URL layout**: `raw.gitcode.com/<org>/<repo>/raw/<branch>/<path>` — there is an extra `/raw/` segment
->    right after the repository name; without it you get an HTML page.
-> 2. **Browser User-Agent required**: GitCode rejects non-browser agents such as `curl/8.x` with
->    `403 暂不支持预览`. Use `curl -A "Mozilla/5.0"` on bash and `irm ... -UserAgent 'Mozilla/5.0'` on
->    PowerShell. The endpoint also rate-limits occasionally; the scripts already retry each source twice
->    with a browser UA and validate downloads, skipping HTML or `暂不支持预览` responses.
+> **Note:** the scripts are hosted next to the tarball at `https://myoumuamua.com/mystatic/aistudio/scripts/`,
+> served over plain HTTP with no auth or User-Agent restrictions. GitCode raw stays in the chain as a
+> fallback: its layout is `raw.gitcode.com/<org>/<repo>/raw/<branch>/<path>` (note the extra `/raw/` segment)
+> and it rejects non-browser agents such as `curl/8.x` with `403 暂不支持预览`. The scripts always send a
+> browser UA, retry each source twice, and validate downloads, skipping HTML or `暂不支持预览` responses.
 
 ## 🛠 Tech stack
 

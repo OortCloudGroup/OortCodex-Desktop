@@ -15,6 +15,8 @@
 
 - CLI 安装包地址规则：`{OORTCODEX_CLI_BASE_URL}oortcodex-cli-{版本}.tgz`，
   默认前缀 `https://myoumuamua.com/mystatic/aistudio/`，默认版本 `0.0.1`，要求 Node `24.14.0`。
+- 脚本托管主源：`https://myoumuamua.com/mystatic/aistudio/scripts/`（用户手动上传四个脚本文件：
+  `install-cli.sh` / `.ps1` / `.bat` / `.mjs`，其中 `.mjs` 是自举必需）；GitCode raw 仅作备份源。
 - 入口：`scripts/install-cli.bat`（cmd）→ `scripts/install-cli.ps1`（PowerShell）/
   `scripts/install-cli.sh`（bash），共用核心 `scripts/install-cli.mjs`。
 - 远程自举：`install-cli.sh` / `.ps1` 在本地找不到 `install-cli.mjs` 时（如 `curl | bash`、`irm | iex`），
