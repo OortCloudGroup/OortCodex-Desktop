@@ -17,6 +17,15 @@ CLI_VERSION="${OORTCODEX_CLI_VERSION:-0.0.1}"
 NODE_VERSION="${OORTCODEX_NODE_VERSION:-24.14.0}"
 AUTO_INSTALL_NODE=0
 
+# 远程脚本源：本地无核心脚本时按序尝试，可用 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
+CANDIDATE_BASES=(
+  "${OORTCODEX_SCRIPTS_BASE_URL:-}"
+  "https://myoumuamua.com/mystatic/aistudio/scripts/"
+  "https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/"
+  "https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/"
+  "https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/"
+)
+
 # 从参数中提取脚本自身需要关心的选项（其余全部透传给核心脚本）
 CORE_ARGS=()
 while [ $# -gt 0 ]; do
@@ -85,9 +94,48 @@ else
   ensure_node_version
 fi
 
+# 判断文件是否为真正的脚本（排除 HTML 登录页等伪装响应）
+is_valid_script() {
+  [ -s "$1" ] || return 1
+  ! head -c 512 "$1" | grep -qi '<!doctype html\|<html'
+}
+
+# 从远程源下载核心脚本 install-cli.mjs
+download_core() {
+  local target="$1" base url
+  for base in "${CANDIDATE_BASES[@]}"; do
+    [ -n "$base" ] || continue
+    url="${base%/}/install-cli.mjs"
+    echo "${LOG_PREFIX} 尝试下载：${url}"
+    if command -v curl >/dev/null 2>&1; then
+      curl -fsSL -m 60 "$url" -o "$target" 2>/dev/null || continue
+    elif command -v wget >/dev/null 2>&1; then
+      wget -q -T 60 -O "$target" "$url" 2>/dev/null || continue
+    else
+      echo "${LOG_PREFIX} 错误：curl 与 wget 都不可用，无法下载核心脚本"
+      return 1
+    fi
+    if is_valid_script "$target"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# 本地无核心脚本时（例如 curl | bash 方式执行），自动从远程获取
 if [ ! -f "$CORE_SCRIPT" ]; then
-  echo "${LOG_PREFIX} 错误：找不到核心脚本 ${CORE_SCRIPT}"
-  exit 1
+  TMP_DIR="$(mktemp -d 2>/dev/null || printf '%s' "${TMPDIR:-/tmp}/oortcodex-install-$$")"
+  mkdir -p "$TMP_DIR" || {
+    echo "${LOG_PREFIX} 错误：无法创建临时目录"
+    exit 1
+  }
+  CORE_SCRIPT="${TMP_DIR}/install-cli.mjs"
+  echo "${LOG_PREFIX} 本地未找到 install-cli.mjs，尝试从远程获取 ..."
+  if ! download_core "$CORE_SCRIPT"; then
+    echo "${LOG_PREFIX} 错误：无法获取核心脚本，请设置 OORTCODEX_SCRIPTS_BASE_URL 指向脚本所在目录"
+    exit 1
+  fi
+  echo "${LOG_PREFIX} 已获取核心脚本：${CORE_SCRIPT}"
 fi
 
 echo "${LOG_PREFIX} 安装包：oortcodex-cli@${CLI_VERSION}，要求 Node ${NODE_VERSION}"

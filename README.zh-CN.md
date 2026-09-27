@@ -144,6 +144,46 @@ OORTCODEX_CLI_VERSION=0.0.2 ./scripts/install-cli.sh   # 环境变量方式
 脚本构成：`scripts/install-cli.mjs` 实现核心逻辑（版本校验、地址拼装、安装、结果校验），
 `install-cli.sh` / `install-cli.ps1` / `install-cli.bat` 是各终端的入口。
 
+### 🌐 远程一键安装（无需克隆仓库）
+
+脚本已随仓库发布，不必克隆整个仓库，一行命令即可安装：
+
+```bash
+# bash / zsh / Git Bash
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash
+
+# 指定版本
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash -s -- --version 0.0.2
+```
+
+```powershell
+# PowerShell
+irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+
+# 指定版本
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+```
+
+```bat
+:: cmd
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex"
+```
+
+脚本源按以下顺序自动回退，第一个可用即止；也可用 `OORTCODEX_SCRIPTS_BASE_URL` 直接指定：
+
+| 顺序 | 脚本源                                                                 |
+| ---- | ---------------------------------------------------------------------- |
+| 1    | `$OORTCODEX_SCRIPTS_BASE_URL`（自定义，优先级最高）                     |
+| 2    | `https://myoumuamua.com/mystatic/aistudio/scripts/`（与安装包同站，推荐） |
+| 3    | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/` |
+| 4    | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/` |
+| 5    | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/` |
+
+> **注意**：GitCode 的 raw 链接（含 `raw.gitcode.com`）目前返回的是 HTML 登录页而非原始文件，
+> 因此无法直接 `curl` / `irm` 下载。请把 `scripts/` 目录同步到自有静态站
+> `https://myoumuamua.com/mystatic/aistudio/scripts/`（与安装包同一站点，已验证可达），
+> 或改用 GitHub raw。脚本会校验下载内容，自动跳过返回 HTML 的源并尝试下一个。
+
 ## 🛠 技术栈
 
 Electron · React 19 · TypeScript · Node.js 24 · pnpm monorepo，跨 Windows / macOS / Linux。

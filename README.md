@@ -145,6 +145,47 @@ version), `--skip-url-check` (skip the download URL probe).
 How it is built: `scripts/install-cli.mjs` holds the core logic (version check, URL assembly, install,
 verification), while `install-cli.sh` / `install-cli.ps1` / `install-cli.bat` are the per-shell entry points.
 
+### 🌐 Remote one-click install (no clone needed)
+
+The scripts ship with the repository, so a single line is enough — no need to clone the repo:
+
+```bash
+# bash / zsh / Git Bash
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash
+
+# with a specific version
+curl -fsSL https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.sh | bash -s -- --version 0.0.2
+```
+
+```powershell
+# PowerShell
+irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+
+# with a specific version
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex
+```
+
+```bat
+:: cmd
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.ps1 | iex"
+```
+
+Script sources are tried in order until one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
+
+| Order | Source                                                                                  |
+| ----- | --------------------------------------------------------------------------------------- |
+| 1     | `$OORTCODEX_SCRIPTS_BASE_URL` (custom, highest priority)                                 |
+| 2     | `https://myoumuamua.com/mystatic/aistudio/scripts/` (same host as the tarball, recommended) |
+| 3     | `https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`                  |
+| 4     | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`        |
+| 5     | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`              |
+
+> **Note:** GitCode raw URLs (including `raw.gitcode.com`) currently return an HTML sign-in page instead
+> of the raw file, so they cannot be fetched with `curl` / `irm`. Sync the `scripts/` directory to your
+> own static host `https://myoumuamua.com/mystatic/aistudio/scripts/` (same host as the tarball, verified
+> reachable) or use GitHub raw instead. The scripts validate what they download and automatically skip
+> sources that return HTML.
+
 ## 🛠 Tech stack
 
 Electron · React 19 · TypeScript · Node.js 24 · pnpm monorepo, across Windows / macOS / Linux.

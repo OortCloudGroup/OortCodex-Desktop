@@ -15,6 +15,7 @@
 param(
     [string]$Version = $(if ($env:OORTCODEX_CLI_VERSION) { $env:OORTCODEX_CLI_VERSION } else { '0.0.1' }),
     [string]$NodeVersion = $(if ($env:OORTCODEX_NODE_VERSION) { $env:OORTCODEX_NODE_VERSION } else { '24.14.0' }),
+    [string]$ScriptsBase = $(if ($env:OORTCODEX_SCRIPTS_BASE_URL) { $env:OORTCODEX_SCRIPTS_BASE_URL } else { '' }),
     [switch]$AutoInstallNode,
     [switch]$AllowNewerNode,
     [switch]$SkipUrlCheck,
@@ -33,7 +34,64 @@ catch {
     # 部分宿主不支持设置编码，忽略即可
 }
 
-$coreScript = Join-Path $PSScriptRoot 'install-cli.mjs'
+# 远程脚本源：本地无核心脚本时按序尝试，可用 -ScriptsBase 或 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
+$scriptBases = @()
+if ($ScriptsBase) { $scriptBases += $ScriptsBase }
+$scriptBases += @(
+    'https://myoumuamua.com/mystatic/aistudio/scripts/',
+    'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/main/scripts/',
+    'https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/',
+    'https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/'
+)
+
+# 从远程源下载核心脚本 install-cli.mjs（排除 HTML 登录页等伪装响应）
+function Get-RemoteCoreScript {
+    param([string[]]$BaseUrls)
+
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+
+    $targetDir = Join-Path $env:TEMP 'oortcodex-cli-install'
+    if (-not (Test-Path -LiteralPath $targetDir)) {
+        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+    }
+    $target = Join-Path $targetDir 'install-cli.mjs'
+
+    foreach ($base in $BaseUrls) {
+        if (-not $base) { continue }
+        $url = $base.TrimEnd('/') + '/install-cli.mjs'
+        Write-Host "$LogPrefix 尝试下载：$url"
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+        }
+        catch {
+            continue
+        }
+        if (Test-Path -LiteralPath $target -PathType Leaf) {
+            $head = (Get-Content -LiteralPath $target -TotalCount 5 -ErrorAction SilentlyContinue) -join "`n"
+            if ($head -and $head -notmatch '<!DOCTYPE html|<html') {
+                return $target
+            }
+        }
+    }
+    return $null
+}
+
+# 优先使用本地核心脚本；管道执行（irm | iex）时自动从远程获取
+$coreScript = ''
+if ($PSScriptRoot) {
+    $localCore = Join-Path $PSScriptRoot 'install-cli.mjs'
+    if (Test-Path -LiteralPath $localCore -PathType Leaf) {
+        $coreScript = $localCore
+    }
+}
+if (-not $coreScript) {
+    Write-Host "$LogPrefix 本地未找到 install-cli.mjs，尝试从远程获取 ..."
+    $coreScript = Get-RemoteCoreScript -BaseUrls $scriptBases
+}
+if (-not $coreScript) {
+    Write-Error "$LogPrefix 无法获取核心脚本，请用 -ScriptsBase 指定脚本所在目录"
+    exit 1
+}
 
 # 重新加载 PATH，便于 winget/nvm 刚安装完的 Node 立即生效
 function Refresh-Path {
@@ -71,11 +129,6 @@ function Install-NodeByWinget {
     }
     Refresh-Path
     return $true
-}
-
-if (-not (Test-Path -LiteralPath $coreScript -PathType Leaf)) {
-    Write-Error "$LogPrefix 找不到核心脚本：$coreScript"
-    exit 1
 }
 
 # 步骤一：检查 Node 是否存在

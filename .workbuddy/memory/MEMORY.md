@@ -17,4 +17,10 @@
   默认前缀 `https://myoumuamua.com/mystatic/aistudio/`，默认版本 `0.0.1`，要求 Node `24.14.0`。
 - 入口：`scripts/install-cli.bat`（cmd）→ `scripts/install-cli.ps1`（PowerShell）/
   `scripts/install-cli.sh`（bash），共用核心 `scripts/install-cli.mjs`。
+- 远程自举：`install-cli.sh` / `.ps1` 在本地找不到 `install-cli.mjs` 时（如 `curl | bash`、`irm | iex`），
+  会按 `OORTCODEX_SCRIPTS_BASE_URL` → 自有静态站 → GitCode raw → GitHub raw → jsDelivr 的顺序下载核心脚本，
+  并校验内容是否 HTML（跳过伪装成 200 的登录页）。
+- **GitCode raw 不可用**：`gitcode.com/<repo>/raw/<branch>/<path>`、`raw.gitcode.com`、`-/raw/`、archive.zip
+  全部返回同一个约 5.8KB 的 HTML 登录页（HTTP 200），无法 curl/irm 下载原始文件；GitHub raw 在本机网络不通。
+  已验证可达的是自有静态站 `https://myoumuamua.com/mystatic/aistudio/`（tgz 与脚本应放这里）。
 - `scripts/update-latest.ps1` 是独立的 latest.json 更新脚本，与安装脚本无依赖关系。
