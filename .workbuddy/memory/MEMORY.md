@@ -22,7 +22,10 @@
   并校验内容是否 HTML（跳过伪装成 200 的登录页）。
 - **GitCode raw 正确格式**：`https://raw.gitcode.com/<组织>/<仓库>/raw/<分支>/<路径>`
   —— 域名后**还有一层 `/raw/`**，写成 `raw.gitcode.com/<仓库>/main/...` 会拿到 HTML 页面。
-- 该接口**偶发 403「暂不支持预览」**（限流性质，重试即可成功），因此脚本每个源重试 2 次，
+- 该接口**强制要求浏览器 UA**：实测 `curl/8.x` 默认 UA → `403 暂不支持预览`，
+  换成 `Mozilla/5.0 ...` 立刻 200。因此 curl 必须带 `-A "Mozilla/5.0"`、
+  `Invoke-WebRequest` 必须带 `-UserAgent 'Mozilla/5.0'`（PS 5.1 的 IWR 支持该参数）。
+- 同时存在**偶发限流**（同一 UA 也可能 403，隔几秒重试即成功），脚本每个源重试 2 次，
   并校验下载内容排除 HTML / 「暂不支持预览」的伪装响应。
 - 不可用：`gitcode.com/<repo>/raw/<branch>/...`（返回 HTML 登录页）、`/-/raw/`、`archive/main.zip`、
   jsDelivr（GitHub 侧无此仓库，404）；GitHub raw 本机网络不通（000）。

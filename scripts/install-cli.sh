@@ -17,6 +17,9 @@ CLI_VERSION="${OORTCODEX_CLI_VERSION:-0.0.1}"
 NODE_VERSION="${OORTCODEX_NODE_VERSION:-24.14.0}"
 AUTO_INSTALL_NODE=0
 
+# 部分代码托管平台（如 GitCode raw）会拒绝非浏览器 UA，统一使用浏览器 UA 下载
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+
 # 远程脚本源：本地无核心脚本时按序尝试，可用 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
 CANDIDATE_BASES=(
   "${OORTCODEX_SCRIPTS_BASE_URL:-}"
@@ -109,9 +112,9 @@ download_core() {
     for attempt in 1 2; do
       echo "${LOG_PREFIX} 尝试下载（第 ${attempt} 次）：${url}"
       if command -v curl >/dev/null 2>&1; then
-        curl -fsSL -m 60 "$url" -o "$target" 2>/dev/null || { sleep 2; continue; }
+        curl -fsSL -m 60 -A "$USER_AGENT" "$url" -o "$target" 2>/dev/null || { sleep 2; continue; }
       elif command -v wget >/dev/null 2>&1; then
-        wget -q -T 60 -O "$target" "$url" 2>/dev/null || { sleep 2; continue; }
+        wget -q -T 60 --user-agent="$USER_AGENT" -O "$target" "$url" 2>/dev/null || { sleep 2; continue; }
       else
         echo "${LOG_PREFIX} 错误：curl 与 wget 都不可用，无法下载核心脚本"
         return 1

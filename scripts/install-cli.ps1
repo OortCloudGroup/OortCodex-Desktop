@@ -34,6 +34,9 @@ catch {
     # 部分宿主不支持设置编码，忽略即可
 }
 
+# 部分代码托管平台（如 GitCode raw）会拒绝非浏览器 UA，统一使用浏览器 UA 下载
+$scriptUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
+
 # 远程脚本源：本地无核心脚本时按序尝试，可用 -ScriptsBase 或 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
 $scriptBases = @()
 if ($ScriptsBase) { $scriptBases += $ScriptsBase }
@@ -64,7 +67,8 @@ function Get-RemoteCoreScript {
         foreach ($attempt in 1..2) {
             Write-Host "$LogPrefix 尝试下载（第 $attempt 次）：$url"
             try {
-                Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 60 -ErrorAction Stop
+                Invoke-WebRequest -Uri $url -OutFile $target -UseBasicParsing -TimeoutSec 60 `
+                    -UserAgent $scriptUserAgent -ErrorAction Stop
             }
             catch {
                 Start-Sleep -Seconds 2

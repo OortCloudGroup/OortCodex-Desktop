@@ -150,23 +150,31 @@ OORTCODEX_CLI_VERSION=0.0.2 ./scripts/install-cli.sh   # 环境变量方式
 
 ```bash
 # bash / zsh / Git Bash
-curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash
+curl -fsSL -A "Mozilla/5.0" https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash
 
 # 指定版本
-curl -fsSL https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash -s -- --version 0.0.2
+curl -fsSL -A "Mozilla/5.0" https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.sh | bash -s -- --version 0.0.2
 ```
 
 ```powershell
 # PowerShell
-irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
+irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex
 
 # 指定版本
-$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex
+$env:OORTCODEX_CLI_VERSION = '0.0.2'; irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex
 ```
 
 ```bat
 :: cmd
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1 -UserAgent 'Mozilla/5.0' | iex"
+```
+
+备用方式（先下载再执行，便于重试）：
+
+```powershell
+$u = 'https://raw.gitcode.com/OortCloudGroup/OortCodex-Desktop/raw/main/scripts/install-cli.ps1'
+irm $u -UserAgent 'Mozilla/5.0' -OutFile "$env:TEMP\install-cli.ps1"
+& "$env:TEMP\install-cli.ps1"
 ```
 
 管道方式执行时脚本会自动下载核心脚本 `install-cli.mjs`，脚本源按以下顺序回退，第一个可用即止；
@@ -180,9 +188,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.gitcode.
 | 4    | `https://raw.githubusercontent.com/OortCloudGroup/OortCodex-Desktop/main/scripts/`    |
 | 5    | `https://cdn.jsdelivr.net/gh/OortCloudGroup/OortCodex-Desktop@main/scripts/`          |
 
-> **说明**：GitCode 的 raw 地址格式为 `raw.gitcode.com/<组织>/<仓库>/raw/<分支>/<路径>`
-> —— 域名之后还有一层 `/raw/`，缺了会拿到 HTML 页面。该接口偶发返回 `403 暂不支持预览`（限流），
-> 脚本已内置「每源重试 2 次」，并会校验下载内容，自动跳过返回 HTML 或错误提示的响应。
+> **两个必知细节**：
+>
+> 1. **地址格式**：`raw.gitcode.com/<组织>/<仓库>/raw/<分支>/<路径>` —— 域名之后还有一层 `/raw/`，
+>    缺了会拿到 HTML 页面。
+> 2. **必须带浏览器 UA**：GitCode 会拒绝 `curl/8.x` 一类非浏览器 UA，返回 `403 暂不支持预览`。
+>    所以 bash 用 `curl -A "Mozilla/5.0"`，PowerShell 用 `irm ... -UserAgent 'Mozilla/5.0'`。
+>    该接口也会偶发限流，脚本内部已内置「每源重试 2 次 + 浏览器 UA」，并会校验下载内容，
+>    自动跳过 HTML 或「暂不支持预览」这类伪装响应。
 
 ## 🛠 技术栈
 
