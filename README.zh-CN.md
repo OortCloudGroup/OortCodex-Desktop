@@ -177,6 +177,15 @@ irm $u -OutFile "$env:TEMP\install-cli.ps1"
 & "$env:TEMP\install-cli.ps1"
 ```
 
+应急方式（**完全不经过 `install-cli.ps1`**，服务器上的 ps1 版本过旧时用它）：
+
+```powershell
+$d = "$env:TEMP\oortcodex-cli-install"
+New-Item -ItemType Directory -Force -Path $d | Out-Null
+irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.mjs -OutFile "$d\install-cli.mjs"
+node "$d\install-cli.mjs" --version=0.0.2
+```
+
 管道方式执行时脚本会自动下载核心脚本 `install-cli.mjs`，脚本源按以下顺序回退，第一个可用即止；
 也可用 `OORTCODEX_SCRIPTS_BASE_URL` 直接指定：
 
@@ -194,6 +203,48 @@ irm $u -OutFile "$env:TEMP\install-cli.ps1"
 > 且会拒绝 `curl/8.x` 这类非浏览器 UA（返回 `403 暂不支持预览`）。
 > 脚本内部已内置「浏览器 UA + 每源重试 2 次」，并会校验下载内容，
 > 自动跳过 HTML 或「暂不支持预览」这类伪装响应。
+
+> **⚠️ 上传 `install-cli.ps1` 的注意事项**
+>
+> 1. **保持纯 ASCII、不带 UTF-8 BOM**。静态站返回 `application/octet-stream`，
+>    PowerShell 5.1 的 `irm` 会按单字节解码：若文件带 BOM，脚本最前面会多出 3 个可见字符；
+>    若文件含中文且无 BOM，`powershell -File` 会按 GBK 读取，多字节序列吞掉换行，注释会吃掉后面的代码。
+> 2. **不要用编辑器「另存为 UTF-8 with BOM」后再上传**，直接用仓库里的原文件即可。
+>
+> 因此 `install-cli.ps1` 的注释与运行输出均为英文，**中文提示统一由核心脚本 `install-cli.mjs` 输出**
+> （Node 按 UTF-8 读取，不会乱码）。`install-cli.sh` / `install-cli.bat` 不受此限制。
+>
+> **已做加固**：`install-cli.ps1` 不再使用 `param()` 块，改为手工解析 `$args`。
+> 因为带 BOM 时 `param()` 会失去「首条语句」位置而让整个脚本解析失败（报「赋值表达式无效」），
+> 而去掉 `param()` 后，BOM 产生的 3 个乱码字符只会被当成一条未知命令、报一行错后继续执行。
+> 也就是说：**就算上传的版本不小心带了 BOM，脚本也照样能跑完安装**。
+
+### 🩺 常见问题
+
+**npm 报 `EACCES`（macOS / Linux 常见）**
+
+原因多是曾以 `sudo` 执行过 npm，缓存目录 `~/.npm/_cacache` 里留下 root 属主的文件。
+脚本会**自动检测并改用独立缓存目录** `~/.npm-oortcodex-cache`，无需 sudo 即可继续；
+也可用 `--cache <目录>` 或 `OORTCODEX_NPM_CACHE` 自行指定。
+
+若仍报权限错误，按脚本提示修复目录归属即可：
+
+```bash
+sudo chown -R "$(id -u):$(id -g)" "$HOME/.npm"
+sudo chown -R "$(id -u):$(id -g)" "$(npm prefix -g)"
+```
+
+或干脆改用用户级全局目录（npm 官方推荐，之后都不需要 sudo）：
+
+```bash
+npm config set prefix ~/.npm-global
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # bash 用 ~/.bashrc
+```
+
+**zsh 下报 `BASH_SOURCE[0]：未绑定的变量`**
+
+`install-cli.sh` 已兼容 zsh（无 `BASH_SOURCE` 时回退到 `$0`），请用仓库最新版重新执行。
+Windows 请以管理员终端运行以规避 `EPERM`。
 
 ## 🛠 技术栈
 

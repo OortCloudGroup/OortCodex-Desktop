@@ -178,6 +178,15 @@ irm $u -OutFile "$env:TEMP\install-cli.ps1"
 & "$env:TEMP\install-cli.ps1"
 ```
 
+Emergency path (**bypasses `install-cli.ps1` entirely**, useful when the copy on the server is stale):
+
+```powershell
+$d = "$env:TEMP\oortcodex-cli-install"
+New-Item -ItemType Directory -Force -Path $d | Out-Null
+irm https://myoumuamua.com/mystatic/aistudio/scripts/install-cli.mjs -OutFile "$d\install-cli.mjs"
+node "$d\install-cli.mjs" --version=0.0.2
+```
+
 When piped, the script fetches its core `install-cli.mjs` automatically. Sources are tried in order until
 one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
 
@@ -194,6 +203,52 @@ one works; set `OORTCODEX_SCRIPTS_BASE_URL` to pin your own:
 > fallback: its layout is `raw.gitcode.com/<org>/<repo>/raw/<branch>/<path>` (note the extra `/raw/` segment)
 > and it rejects non-browser agents such as `curl/8.x` with `403 暂不支持预览`. The scripts always send a
 > browser UA, retry each source twice, and validate downloads, skipping HTML or `暂不支持预览` responses.
+
+> **⚠️ When uploading `install-cli.ps1`**
+>
+> 1. Keep it **pure ASCII and without a UTF-8 BOM**. The static host returns `application/octet-stream`,
+>    which PowerShell 5.1's `irm` decodes byte by byte: with a BOM, three extra visible characters land at
+>    the very start; with non-ASCII text and no BOM, `powershell -File` reads the file as GBK, multi-byte
+>    sequences swallow line breaks, and comments eat the code that follows.
+> 2. Do not re-save it as "UTF-8 with BOM" before uploading — ship the file exactly as it is in the repo.
+>
+> That is why `install-cli.ps1` uses English comments and output: **all Chinese messages are printed by the
+> core script `install-cli.mjs`** (Node reads UTF-8, so nothing gets garbled). `install-cli.sh` and
+> `install-cli.bat` are not affected by this constraint.
+>
+> **Hardened:** `install-cli.ps1` no longer uses a `param()` block and parses `$args` by hand. With a BOM,
+> `param()` loses its "first statement" position and the whole script fails to parse ("The assignment
+> expression is not valid"). Without `param()`, the three stray BOM characters are just treated as an
+> unknown command, produce one harmless error line, and the script keeps going — so **an accidentally
+> BOM-ified upload still installs successfully**.
+
+### 🩺 Troubleshooting
+
+**npm reports `EACCES` (common on macOS / Linux)**
+
+Usually caused by a previous `sudo npm ...` run that left root-owned files in the cache
+(`~/.npm/_cacache`). The script **detects this and automatically switches to a private cache directory**
+(`~/.npm-oortcodex-cache`), so no sudo is needed. You can also pin one yourself with `--cache <dir>`
+or `OORTCODEX_NPM_CACHE`.
+
+If permissions still fail, fix the ownership as printed by the script:
+
+```bash
+sudo chown -R "$(id -u):$(id -g)" "$HOME/.npm"
+sudo chown -R "$(id -u):$(id -g)" "$(npm prefix -g)"
+```
+
+Or move to a user-level global prefix (npm's own recommendation, no sudo ever again):
+
+```bash
+npm config set prefix ~/.npm-global
+echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.zshrc   # use ~/.bashrc for bash
+```
+
+**zsh prints `BASH_SOURCE[0]: unbound variable`**
+
+`install-cli.sh` now handles zsh (it falls back to `$0` when `BASH_SOURCE` is absent) — re-run with the
+latest script from the repository. On Windows, use an administrator terminal to avoid `EPERM`.
 
 ## 🛠 Tech stack
 

@@ -9,12 +9,20 @@
 set -euo pipefail
 
 LOG_PREFIX="[oortcodex]"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# 兼容 zsh：zsh 没有 BASH_SOURCE（会报「未绑定的变量」），统一回退到 $0。
+# 管道执行（curl ... | bash/zsh）时两者都不是真实路径，后续会自动走远程自举逻辑。
+SCRIPT_PATH="$0"
+if [ -n "${BASH_SOURCE:-}" ]; then
+  SCRIPT_PATH="${BASH_SOURCE[0]}"
+fi
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" 2>/dev/null && pwd || true)"
 CORE_SCRIPT="${SCRIPT_DIR}/install-cli.mjs"
 
 # 默认配置，可用环境变量覆盖
 CLI_VERSION="${OORTCODEX_CLI_VERSION:-0.0.1}"
 NODE_VERSION="${OORTCODEX_NODE_VERSION:-24.14.0}"
+# 版本匹配模式：exact 精确匹配 / gte 允许更高版本
+NODE_MODE="${OORTCODEX_NODE_MODE:-exact}"
 AUTO_INSTALL_NODE=0
 
 # 部分代码托管平台（如 GitCode raw）会拒绝非浏览器 UA，统一使用浏览器 UA 下载
@@ -41,6 +49,12 @@ while [ $# -gt 0 ]; do
       NODE_VERSION="${2:-}"; CORE_ARGS+=("$1"); [ $# -gt 1 ] && { CORE_ARGS+=("$2"); shift; } || true; shift || true ;;
     --node-version=*)
       NODE_VERSION="${1#*=}"; CORE_ARGS+=("$1"); shift ;;
+    --node-mode)
+      NODE_MODE="${2:-exact}"; CORE_ARGS+=("$1"); [ $# -gt 1 ] && { CORE_ARGS+=("$2"); shift; } || true; shift || true ;;
+    --node-mode=*)
+      NODE_MODE="${1#*=}"; CORE_ARGS+=("$1"); shift ;;
+    --allow-newer-node)
+      NODE_MODE="gte"; CORE_ARGS+=("$1"); shift ;;
     --auto-install-node)
       AUTO_INSTALL_NODE=1; shift ;;
     *)
@@ -76,12 +90,21 @@ install_node() {
   return 1
 }
 
-# Node 已安装但版本不符时，尝试用 nvm 切换到要求版本
+# Node 已安装但版本不符时，尝试用 nvm 切换到要求版本。
+# gte 模式下当前版本更高即已满足要求，绝不能再降级切换。
 ensure_node_version() {
   local current
   current="$(node --version 2>/dev/null | sed 's/^v//')"
+  [ -n "$current" ] || return 0
   if [ "$current" = "$NODE_VERSION" ]; then
     return 0
+  fi
+  if [ "$NODE_MODE" = "gte" ]; then
+    # 借 node 自身做版本号比较：退出码 0 表示当前版本 >= 要求版本
+    if node -e 'const p=(s)=>s.split(".").map(Number);const c=p(process.versions.node);const r=p(process.argv[1]);for(let i=0;i<Math.max(c.length,r.length);i++){const d=(c[i]||0)-(r[i]||0);if(d!==0){process.exit(d>0?0:1)}}process.exit(0)' "$NODE_VERSION" 2>/dev/null; then
+      echo "${LOG_PREFIX} 当前 Node v${current} 高于要求 ${NODE_VERSION}（gte 模式），无需切换。"
+      return 0
+    fi
   fi
   load_nvm
   if command -v nvm >/dev/null 2>&1; then

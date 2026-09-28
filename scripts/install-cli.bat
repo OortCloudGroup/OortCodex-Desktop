@@ -1,7 +1,7 @@
 @echo off
 REM oortcodex-cli one-click installer (cmd entry -> delegates to install-cli.ps1)
 REM Keep this file ASCII-only: cmd parses it with the legacy codepage, non-ASCII text would garble.
-REM Chinese output is produced by install-cli.ps1.
+REM Chinese output is produced by install-cli.mjs (started through install-cli.ps1).
 
 setlocal
 chcp 65001 >nul

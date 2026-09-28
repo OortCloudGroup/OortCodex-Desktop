@@ -14,7 +14,9 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
+import { accessSync, constants, mkdirSync, rmdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /** 默认配置：环境变量优先，未设置时取此默认值 */
@@ -24,6 +26,7 @@ const DEFAULTS = {
   pkgName: 'oortcodex-cli',
   nodeVersion: '24.14.0',
   nodeMode: 'exact',
+  cacheDir: '',
 };
 
 const LOG_PREFIX = '[oortcodex]';
@@ -46,6 +49,7 @@ function readEnvDefaults() {
     pkgName: 'OORTCODEX_CLI_PKG',
     nodeVersion: 'OORTCODEX_NODE_VERSION',
     nodeMode: 'OORTCODEX_NODE_MODE',
+    cacheDir: 'OORTCODEX_NPM_CACHE',
   };
   const options = { ...DEFAULTS };
   for (const [key, envName] of Object.entries(envMap)) {
@@ -65,6 +69,7 @@ function printHelp() {
   --pkg <包名>          包名，默认 ${DEFAULTS.pkgName}
   --node-version <版本> Node 要求版本，默认 ${DEFAULTS.nodeVersion}
   --node-mode <模式>    exact 精确匹配 / gte 大于等于，默认 ${DEFAULTS.nodeMode}
+  --cache <目录>        指定 npm 缓存目录（默认缓存不可写时会自动改用 ~/.npm-oortcodex-cache）
   --allow-newer-node    等价于 --node-mode gte
   --skip-url-check      跳过下载地址可访问性探测
   --dry-run             只打印待执行命令，不真实安装
@@ -80,6 +85,7 @@ function parseArgs(argv) {
     '--pkg': 'pkgName',
     '--node-version': 'nodeVersion',
     '--node-mode': 'nodeMode',
+    '--cache': 'cacheDir',
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -147,20 +153,20 @@ function compareVersion(versionA, versionB) {
   return 0;
 }
 
-/** 输出各平台安装指定版本 Node 的指引 */
+/** 输出各平台安装指定版本 Node 的指引（版本号必须取自 requiredVersion，不能写死） */
 function printNodeGuide(requiredVersion) {
   const platform = process.platform;
   console.log(`${LOG_PREFIX} 请先安装 Node.js ${requiredVersion}：`);
   if (platform === 'win32') {
-    console.log('  winget install OpenJS.NodeJS --version 24.14.0 --exact');
-    console.log('  nvm-windows: nvm install 24.14.0 && nvm use 24.14.0');
-    console.log('  或手动下载：https://nodejs.org/dist/v24.14.0/node-v24.14.0-x64.msi');
+    console.log(`  winget install OpenJS.NodeJS --version ${requiredVersion} --exact`);
+    console.log(`  nvm-windows: nvm install ${requiredVersion} && nvm use ${requiredVersion}`);
+    console.log(`  或手动下载：https://nodejs.org/dist/v${requiredVersion}/node-v${requiredVersion}-x64.msi`);
   } else if (platform === 'darwin') {
-    console.log('  nvm install 24.14.0 && nvm use 24.14.0');
-    console.log('  或手动下载：https://nodejs.org/dist/v24.14.0/node-v24.14.0.pkg');
+    console.log(`  nvm install ${requiredVersion} && nvm use ${requiredVersion}`);
+    console.log(`  或手动下载：https://nodejs.org/dist/v${requiredVersion}/node-v${requiredVersion}.pkg`);
   } else {
-    console.log('  nvm install 24.14.0 && nvm use 24.14.0');
-    console.log('  或手动下载：https://nodejs.org/dist/v24.14.0/');
+    console.log(`  nvm install ${requiredVersion} && nvm use ${requiredVersion}`);
+    console.log(`  或手动下载：https://nodejs.org/dist/v${requiredVersion}/`);
   }
   console.log(`${LOG_PREFIX} 安装完成后重新执行本脚本即可。`);
 }
@@ -236,6 +242,82 @@ function resolveNpm() {
   return null;
 }
 
+/** 目录是否存在且为目录 */
+function dirExists(dir) {
+  try {
+    return statSync(dir).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/** 判断目录是否可写：权限位 + 实际创建探测目录（父目录可写不代表能写进去） */
+function isDirWritable(dir) {
+  if (!dir || !dirExists(dir)) {
+    return false;
+  }
+  try {
+    accessSync(dir, constants.W_OK);
+    const probe = path.join(dir, `.oortcodex-probe-${process.pid}`);
+    mkdirSync(probe);
+    rmdirSync(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** 判断目录属主是否为当前用户（root 属主会在普通用户下触发 EACCES；Windows 无 uid 概念） */
+function isOwnedByUser(dir) {
+  if (typeof process.getuid !== 'function' || process.getuid() === 0) {
+    return true;
+  }
+  try {
+    return statSync(dir).uid === process.getuid();
+  } catch {
+    return true;
+  }
+}
+
+/** npm 缓存是否可用：缓存根目录及其 _cacache、_cacache/index-v5 都要既可写又属于当前用户 */
+function isCacheUsable(cacheDir) {
+  const targets = [
+    cacheDir,
+    path.join(cacheDir, '_cacache'),
+    path.join(cacheDir, '_cacache', 'index-v5'),
+  ].filter((item) => dirExists(item));
+  return targets.every((item) => isDirWritable(item) && isOwnedByUser(item));
+}
+
+/** 读取 npm 的某个配置项（如 cache、prefix） */
+function readNpmConfig(npm, key) {
+  const result = spawnSync(npm.command, [...npm.baseArgs, 'config', 'get', key], {
+    encoding: 'utf8',
+    shell: Boolean(npm.shell),
+  });
+  return result.status === 0 ? result.stdout.trim() : '';
+}
+
+/**
+ * 确定 npm 缓存目录。
+ * 常见问题：曾用 sudo 执行过 npm，缓存目录（~/.npm/_cacache）里留下 root 属主的文件，
+ * 之后普通用户执行 npm 就会 EACCES。此时自动改用独立缓存目录，无需 sudo 即可继续。
+ */
+function resolveCacheDir(npm, customCache) {
+  if (customCache) {
+    return { cacheDir: customCache, fallback: false };
+  }
+  const defaultCache = readNpmConfig(npm, 'cache');
+  if (!defaultCache) {
+    return { cacheDir: '', fallback: false };
+  }
+  if (isCacheUsable(defaultCache)) {
+    return { cacheDir: '', fallback: false };
+  }
+  const fallbackDir = path.join(os.homedir(), '.npm-oortcodex-cache');
+  return { cacheDir: fallbackDir, fallback: true, origin: defaultCache };
+}
+
 /** 拼装 tgz 下载地址 */
 function buildTarballUrl(baseUrl, pkgName, version) {
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
@@ -279,6 +361,21 @@ function verifyInstall(pkgName) {
   return false;
 }
 
+/** 输出权限问题的修复指引（区分 Windows 与 macOS/Linux） */
+function logPermissionFix(prefixDir, cacheOrigin) {
+  if (process.platform === 'win32') {
+    log('  请以管理员身份打开终端后重试（EACCES / EPERM）。');
+    return;
+  }
+  if (cacheOrigin) {
+    log(`  sudo chown -R "$(id -u):$(id -g)" "${cacheOrigin}"`);
+  }
+  if (prefixDir) {
+    log(`  sudo chown -R "$(id -u):$(id -g)" "${prefixDir}"`);
+  }
+  log('  或改用用户级全局目录：npm config set prefix ~/.npm-global（并把 ~/.npm-global/bin 加入 PATH）');
+}
+
 /** 主流程 */
 async function main() {
   const options = parseArgs(process.argv.slice(2));
@@ -309,8 +406,23 @@ async function main() {
     return 1;
   }
 
+  // 缓存目录：默认缓存不可写（常见于曾用 sudo 跑过 npm）时自动改用独立缓存
+  const cache = resolveCacheDir(npm, options.cacheDir);
+  if (cache.fallback) {
+    log(`默认 npm 缓存不可写：${cache.origin}`);
+    log(`自动改用独立缓存目录：${cache.cacheDir}（也可用 --cache 指定）`);
+  }
+
+  // 全局目录不可写时提前给出修复指引，避免装到一半才报 EACCES
+  const globalPrefix = readNpmConfig(npm, 'prefix');
+  const globalModules = globalPrefix ? path.join(globalPrefix, 'lib', 'node_modules') : '';
+  const prefixWritable = isDirWritable(globalModules) || isDirWritable(globalPrefix);
+
   const tarballUrl = buildTarballUrl(options.baseUrl, options.pkgName, options.version);
   const npmArgs = [...npm.baseArgs, 'install', '-g', tarballUrl, '--no-fund', '--no-audit'];
+  if (cache.cacheDir) {
+    npmArgs.push('--cache', cache.cacheDir);
+  }
   const displayCommand = `${npm.command} ${npmArgs.join(' ')}`;
 
   if (options.dryRun) {
@@ -329,6 +441,11 @@ async function main() {
     log('下载地址可访问。');
   }
 
+  if (!prefixWritable && globalPrefix) {
+    log(`警告：npm 全局目录不可写：${globalPrefix}`);
+    logPermissionFix(globalPrefix, cache.origin || cache.cacheDir);
+  }
+
   log(`开始安装：${displayCommand}`);
   const installResult = spawnSync(npm.command, npmArgs, { stdio: 'inherit', shell: Boolean(npm.shell) });
   if (installResult.error) {
@@ -337,7 +454,9 @@ async function main() {
   }
   if (installResult.status !== 0) {
     logError(`npm install 失败，退出码 ${installResult.status}`);
-    log('若为权限问题（EACCES / EPERM），Windows 请以管理员终端重试，macOS/Linux 请加 sudo。');
+    log('若报 EACCES / EPERM（权限问题），可这样修复后重试：');
+    logPermissionFix(globalPrefix, cache.origin || cache.cacheDir);
+    log('若为网络或版本问题，请确认下载地址可访问后重试，或加 --skip-url-check 跳过探测。');
     return 1;
   }
 
