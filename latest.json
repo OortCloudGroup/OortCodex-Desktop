@@ -1,10 +1,10 @@
 {
-  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.1/OortCodex-Desktop.exe",
-  "name": "1.0.1",
-  "version": "1.0.1",
-  "productVersion": "1.0.1.0",
-  "hash": "1dee7882bb73fd58ac6bdc839653e921f18f94e9",
-  "timestamp": 1790502391199,
-  "sha256hash": "70c6ba67fc487cacc04beb50cc141d37f57769404c3e13df6afae7bf392870dc",
+  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.2/OortCodex-Desktop.exe",
+  "name": "1.0.2",
+  "version": "1.0.2",
+  "productVersion": "1.0.2.0",
+  "hash": "f35d33578db9205a30d0924f4185332ced0751a7",
+  "timestamp": 1790727401262,
+  "sha256hash": "055c59a076bfb996b22fbfb1bd5a1bbd6a97b57d74e8a4c032adc377f6cf14aa",
   "logs": "## 1.0.1 \n\n -更新升级和用量页面"
 }
