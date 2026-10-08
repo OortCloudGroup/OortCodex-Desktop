@@ -2,12 +2,11 @@
 /**
  * oortcodex-cli 一键安装脚本（Node 核心层，跨平台共用）
  *
- * 职责：校验 Node 版本 → 拼装 tgz 下载地址 → 执行 npm install -g → 校验安装结果
+ * 职责：校验 Node 版本 → 执行 npm install -g 包名 → 校验安装结果
  * 入口：install-cli.sh（bash/zsh）、install-cli.ps1（PowerShell）、install-cli.bat（cmd）
  *
  * 可用变量控制：
- *   OORTCODEX_CLI_VERSION      安装包版本，默认 0.0.1
- *   OORTCODEX_CLI_BASE_URL     下载地址前缀，默认 https://myoumuamua.com/mystatic/aistudio/
+ *   OORTCODEX_CLI_VERSION      安装包版本，默认 latest
  *   OORTCODEX_CLI_PKG          包名，默认 oortcodex-cli
  *   OORTCODEX_NODE_VERSION     Node 要求版本，默认 24.14.0
  *   OORTCODEX_NODE_MODE        版本匹配模式：exact（精确等于）/ gte（大于等于），默认 exact
@@ -17,12 +16,10 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { accessSync, constants, mkdirSync, rmdirSync, statSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 
 /** 默认配置：环境变量优先，未设置时取此默认值 */
 const DEFAULTS = {
-  version: '0.0.1',
-  baseUrl: 'https://myoumuamua.com/mystatic/aistudio/',
+  version: 'latest',
   pkgName: 'oortcodex-cli',
   nodeVersion: '24.14.0',
   nodeMode: 'exact',
@@ -45,7 +42,6 @@ function logError(message) {
 function readEnvDefaults() {
   const envMap = {
     version: 'OORTCODEX_CLI_VERSION',
-    baseUrl: 'OORTCODEX_CLI_BASE_URL',
     pkgName: 'OORTCODEX_CLI_PKG',
     nodeVersion: 'OORTCODEX_NODE_VERSION',
     nodeMode: 'OORTCODEX_NODE_MODE',
@@ -65,13 +61,11 @@ function readEnvDefaults() {
 function printHelp() {
   console.log(`${LOG_PREFIX} 用法：install-cli [选项]
   --version <值>        安装包版本，默认 ${DEFAULTS.version}（环境变量 OORTCODEX_CLI_VERSION）
-  --base-url <地址>     下载地址前缀，默认 ${DEFAULTS.baseUrl}
   --pkg <包名>          包名，默认 ${DEFAULTS.pkgName}
   --node-version <版本> Node 要求版本，默认 ${DEFAULTS.nodeVersion}
   --node-mode <模式>    exact 精确匹配 / gte 大于等于，默认 ${DEFAULTS.nodeMode}
   --cache <目录>        指定 npm 缓存目录（默认缓存不可写时会自动改用 ~/.npm-oortcodex-cache）
   --allow-newer-node    等价于 --node-mode gte
-  --skip-url-check      跳过下载地址可访问性探测
   --dry-run             只打印待执行命令，不真实安装
   -h, --help            显示本帮助`);
 }
@@ -81,7 +75,6 @@ function parseArgs(argv) {
   const options = readEnvDefaults();
   const flagMap = {
     '--version': 'version',
-    '--base-url': 'baseUrl',
     '--pkg': 'pkgName',
     '--node-version': 'nodeVersion',
     '--node-mode': 'nodeMode',
@@ -101,10 +94,6 @@ function parseArgs(argv) {
     }
     if (arg === '--allow-newer-node') {
       options.nodeMode = 'gte';
-      continue;
-    }
-    if (arg === '--skip-url-check') {
-      options.skipUrlCheck = true;
       continue;
     }
 
@@ -318,22 +307,6 @@ function resolveCacheDir(npm, customCache) {
   return { cacheDir: fallbackDir, fallback: true, origin: defaultCache };
 }
 
-/** 拼装 tgz 下载地址 */
-function buildTarballUrl(baseUrl, pkgName, version) {
-  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  return `${normalizedBase}${pkgName}-${version}.tgz`;
-}
-
-/** 探测下载地址是否可访问 */
-async function checkUrlReachable(url) {
-  try {
-    const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
 /** 校验安装结果：尝试执行全局命令 */
 function verifyInstall(pkgName) {
   const candidates = process.platform === 'win32'
@@ -377,17 +350,17 @@ function logPermissionFix(prefixDir, cacheOrigin) {
 }
 
 /** 主流程 */
-async function main() {
+function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) {
     printHelp();
     return 0;
   }
 
-  // 版本号格式校验，避免非法输入拼进下载地址与命令
+  // 版本号格式校验，避免非法输入拼进 npm 包规格
   const versionPattern = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
-  if (!versionPattern.test(options.version)) {
-    logError(`安装包版本号格式不合法：${options.version}（示例：0.0.1）`);
+  if (options.version !== 'latest' && !versionPattern.test(options.version)) {
+    logError(`安装包版本号格式不合法：${options.version}（示例：latest 或 1.2.3）`);
     return 1;
   }
   if (!/^\d+(?:\.\d+){0,2}$/.test(options.nodeVersion)) {
@@ -418,8 +391,10 @@ async function main() {
   const globalModules = globalPrefix ? path.join(globalPrefix, 'lib', 'node_modules') : '';
   const prefixWritable = isDirWritable(globalModules) || isDirWritable(globalPrefix);
 
-  const tarballUrl = buildTarballUrl(options.baseUrl, options.pkgName, options.version);
-  const npmArgs = [...npm.baseArgs, 'install', '-g', tarballUrl, '--no-fund', '--no-audit'];
+  const packageSpec = options.version === 'latest'
+    ? options.pkgName
+    : `${options.pkgName}@${options.version}`;
+  const npmArgs = [...npm.baseArgs, 'install', '-g', packageSpec, '--no-fund', '--no-audit'];
   if (cache.cacheDir) {
     npmArgs.push('--cache', cache.cacheDir);
   }
@@ -428,17 +403,6 @@ async function main() {
   if (options.dryRun) {
     log(`[dry-run] 将执行：${displayCommand}`);
     return 0;
-  }
-
-  if (!options.skipUrlCheck) {
-    log(`探测下载地址：${tarballUrl}`);
-    const reachable = await checkUrlReachable(tarballUrl);
-    if (!reachable) {
-      logError(`下载地址不可访问或资源不存在：${tarballUrl}`);
-      log('请确认版本号与网络后重试，或加 --skip-url-check 跳过探测。');
-      return 1;
-    }
-    log('下载地址可访问。');
   }
 
   if (!prefixWritable && globalPrefix) {
@@ -456,7 +420,7 @@ async function main() {
     logError(`npm install 失败，退出码 ${installResult.status}`);
     log('若报 EACCES / EPERM（权限问题），可这样修复后重试：');
     logPermissionFix(globalPrefix, cache.origin || cache.cacheDir);
-    log('若为网络或版本问题，请确认下载地址可访问后重试，或加 --skip-url-check 跳过探测。');
+    log('请检查网络连接、npm registry 配置和包版本后重试。');
     return 1;
   }
 
@@ -465,9 +429,9 @@ async function main() {
   return 0;
 }
 
-main().then((code) => {
-  process.exit(code);
-}).catch((error) => {
+try {
+  process.exit(main());
+} catch (error) {
   logError(error instanceof Error ? error.message : String(error));
   process.exit(1);
-});
+}

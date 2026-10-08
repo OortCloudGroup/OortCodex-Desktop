@@ -27,13 +27,12 @@ catch {
 }
 
 # Defaults: environment variables first, then built-in values
-$OortVersion = if ($env:OORTCODEX_CLI_VERSION) { $env:OORTCODEX_CLI_VERSION } else { '0.0.1' }
+$OortVersion = if ($env:OORTCODEX_CLI_VERSION) { $env:OORTCODEX_CLI_VERSION } else { 'latest' }
 $OortNodeVersion = if ($env:OORTCODEX_NODE_VERSION) { $env:OORTCODEX_NODE_VERSION } else { '24.14.0' }
 $OortScriptsBase = if ($env:OORTCODEX_SCRIPTS_BASE_URL) { $env:OORTCODEX_SCRIPTS_BASE_URL } else { '' }
 $OortCache = if ($env:OORTCODEX_NPM_CACHE) { $env:OORTCODEX_NPM_CACHE } else { '' }
 $OortAutoInstallNode = $false
 $OortAllowNewerNode = $false
-$OortSkipUrlCheck = $false
 $OortDryRun = $false
 
 # Manual argument parsing (see rule 1 above: no `param()` block on purpose)
@@ -69,8 +68,6 @@ for ($i = 0; $i -lt $args.Count; $i++) {
         '-AutoInstallNode' { $OortAutoInstallNode = $true }
         '--allow-newer-node' { $OortAllowNewerNode = $true }
         '-AllowNewerNode' { $OortAllowNewerNode = $true }
-        '--skip-url-check' { $OortSkipUrlCheck = $true }
-        '-SkipUrlCheck' { $OortSkipUrlCheck = $true }
         '--dry-run' { $OortDryRun = $true }
         '-DryRun' { $OortDryRun = $true }
         default {
@@ -236,7 +233,6 @@ function Invoke-OortCodexInstall {
     )
     if ($OortCache) { $coreArgs += "--cache=$OortCache" }
     if ($OortAllowNewerNode) { $coreArgs += '--allow-newer-node' }
-    if ($OortSkipUrlCheck) { $coreArgs += '--skip-url-check' }
     if ($OortDryRun) { $coreArgs += '--dry-run' }
 
     Write-Host "$LogPrefix package: oortcodex-cli@$OortVersion"

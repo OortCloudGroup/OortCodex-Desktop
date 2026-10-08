@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # oortcodex-cli 一键安装脚本（bash / zsh / Git Bash 入口）
 # 用法：
-#   ./install-cli.sh                      安装默认版本 0.0.1
+#   ./install-cli.sh                      安装 npm 最新版本
 #   ./install-cli.sh --version 0.0.2      安装指定版本
 #   OORTCODEX_CLI_VERSION=0.0.3 ./install-cli.sh
 # 可选参数：--node-version <版本>、--auto-install-node（无 Node 时自动安装）
@@ -19,13 +19,13 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" 2>/dev/null && pwd || true)"
 CORE_SCRIPT="${SCRIPT_DIR}/install-cli.mjs"
 
 # 默认配置，可用环境变量覆盖
-CLI_VERSION="${OORTCODEX_CLI_VERSION:-0.0.1}"
+CLI_VERSION="${OORTCODEX_CLI_VERSION:-latest}"
 NODE_VERSION="${OORTCODEX_NODE_VERSION:-24.14.0}"
 # 版本匹配模式：exact 精确匹配 / gte 允许更高版本
 NODE_MODE="${OORTCODEX_NODE_MODE:-exact}"
 AUTO_INSTALL_NODE=0
 
-# 部分代码托管平台（如 GitCode raw）会拒绝非浏览器 UA，统一使用浏览器 UA 下载
+# 远程引导脚本使用浏览器 UA，兼容部分代码托管平台
 USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 
 # 远程脚本源：本地无核心脚本时按序尝试，可用 OORTCODEX_SCRIPTS_BASE_URL 指定首选源
