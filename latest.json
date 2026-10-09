@@ -1,10 +1,10 @@
 {
-  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.3/OortCodex-Desktop.exe",
-  "name": "1.0.3",
-  "version": "1.0.3",
-  "productVersion": "1.0.3.0",
-  "hash": "2d3a91e8d9b53ac19bca90c8b4cbfeaa1c1b8b01",
-  "timestamp": 1791438126387,
-  "sha256hash": "931c78d1df6169fd24a87284389af0814c687357128e3b24ab7c244e8209e0d2",
-  "logs": "## 1.0.3 \n\n -优化登录体验  \n\n -调整启动视觉  \n\n -设置导航图标调整"
+  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.4/OortCodex-Desktop.exe",
+  "name": "1.0.4",
+  "version": "1.0.4",
+  "productVersion": "1.0.4.0",
+  "hash": "003100c08d4db422939c3b00216413498c7caf83",
+  "timestamp": 1791537811307,
+  "sha256hash": "6b06950a6b11f7f5b1e24d842eec921124c31b4a55e97f1accca7645f7cb2b9c",
+  "logs": "## 1.0.3 \n\n -优化启动画面  \n\n -调整“订阅与用量”页面  \n\n -修复一些bug"
 }
