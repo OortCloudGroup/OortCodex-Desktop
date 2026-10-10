@@ -1,10 +1,10 @@
 {
-  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.4/OortCodex-Desktop.exe",
-  "name": "1.0.4",
-  "version": "1.0.4",
-  "productVersion": "1.0.4.0",
-  "hash": "f823a0c9ea91efed1d52e1c5b331d6825a3ca868",
-  "timestamp": 1791541190450,
-  "sha256hash": "abf821f62cb65120c02d0c396f97cd0813203db0e6b3632b8d0585a2bf3edd51",
-  "logs": "## 1.0.3 \n\n -优化启动画面  \n\n -调整“订阅与用量”页面  \n\n -修复一些bug"
+  "url": "https://gitcode.com/OortCloudGroup/OortCodex-Desktop/releases/download/v1.0.5/OortCodex-Desktop.exe",
+  "name": "1.0.5",
+  "version": "1.0.5",
+  "productVersion": "1.0.5.0",
+  "hash": "ebfed7e3f0cf68a161824cf0546fe135f7c60594",
+  "timestamp": 1791628354932,
+  "sha256hash": "c633cbc506a95fa4b3420c11f637ae9665b4617742f5edd27555a859df4a419f",
+  "logs": "## 1.0.5 \n\n -更新帮助菜单社群入口地址  \n\n -自动更新模块增加获取有效更新日志能力 \n\n -修复一些bug"
 }
