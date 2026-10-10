@@ -3,8 +3,8 @@
   "name": "1.0.5",
   "version": "1.0.5",
   "productVersion": "1.0.5.0",
-  "hash": "ebfed7e3f0cf68a161824cf0546fe135f7c60594",
-  "timestamp": 1791628354932,
-  "sha256hash": "c633cbc506a95fa4b3420c11f637ae9665b4617742f5edd27555a859df4a419f",
+  "hash": "291a5ee0d0dd51c4cb53da9b5dd33e7a05a255e4",
+  "timestamp": 1791634161410,
+  "sha256hash": "b75678b4a1256bac5a4879f8be5bfb866a3b2fd3cd6e1cfd782031ab599aaca8",
   "logs": "## 1.0.5 \n\n -更新帮助菜单社群入口地址  \n\n -自动更新模块增加获取有效更新日志能力 \n\n -修复一些bug"
 }
